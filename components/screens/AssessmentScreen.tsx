@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Question } from '../../types';
-import { ASSESSMENT_QUESTION_COUNT, ASSESSMENT_PASS_PERCENTAGE } from '../../constants';
-import { QuestionEngine } from '../../services/questionEngine';
-import { CURRICULUM } from '../../constants';
-import BackButton from '../common/BackButton';
-import ProgressBar from '../common/ProgressBar';
+import { Question } from '../../types.ts';
+import { ASSESSMENT_QUESTION_COUNT, ASSESSMENT_PASS_PERCENTAGE } from '../../constants.ts';
+import { QuestionEngine } from '../../services/questionEngine.ts';
+import { CURRICULUM } from '../../constants.ts';
+import BackButton from '../common/BackButton.tsx';
+import ProgressBar from '../common/ProgressBar.tsx';
 
 interface AssessmentScreenProps {
   grade: string;

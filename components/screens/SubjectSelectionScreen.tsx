@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { CURRICULUM } from '../../constants';
-import BackButton from '../common/BackButton';
+import { CURRICULUM } from '../../constants.ts';
+import BackButton from '../common/BackButton.tsx';
 
 interface SubjectSelectionScreenProps {
   grade: string;

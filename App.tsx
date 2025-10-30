@@ -1,17 +1,17 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Student, View, CertificateData } from './types';
-import { CURRICULUM } from './constants';
+import { Student, View, CertificateData } from './types.ts';
+import { CURRICULUM } from './constants.ts';
 
-import Logo from './components/common/Logo';
-import LoginScreen from './components/screens/LoginScreen';
-import DashboardScreen from './components/screens/DashboardScreen';
-import SubjectSelectionScreen from './components/screens/SubjectSelectionScreen';
-import TopicSelectionScreen from './components/screens/TopicSelectionScreen';
-import LevelSelectionScreen from './components/screens/LevelSelectionScreen';
-import PracticeScreen from './components/screens/PracticeScreen';
-import AssessmentScreen from './components/screens/AssessmentScreen';
-import CertificateScreen from './components/screens/CertificateScreen';
+import Logo from './components/common/Logo.tsx';
+import LoginScreen from './components/screens/LoginScreen.tsx';
+import DashboardScreen from './components/screens/DashboardScreen.tsx';
+import SubjectSelectionScreen from './components/screens/SubjectSelectionScreen.tsx';
+import TopicSelectionScreen from './components/screens/TopicSelectionScreen.tsx';
+import LevelSelectionScreen from './components/screens/LevelSelectionScreen.tsx';
+import PracticeScreen from './components/screens/PracticeScreen.tsx';
+import AssessmentScreen from './components/screens/AssessmentScreen.tsx';
+import CertificateScreen from './components/screens/CertificateScreen.tsx';
 
 const App: React.FC = () => {
   const [student, setStudent] = useState<Student | null>(null);

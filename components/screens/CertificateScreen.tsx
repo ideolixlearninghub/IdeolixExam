@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { CertificateData } from '../../types';
-import { ASSESSMENT_QUESTION_COUNT } from '../../constants';
-import BackButton from '../common/BackButton';
+import { CertificateData } from '../../types.ts';
+import { ASSESSMENT_QUESTION_COUNT } from '../../constants.ts';
+import BackButton from '../common/BackButton.tsx';
 
 interface CertificateScreenProps {
     data: CertificateData;

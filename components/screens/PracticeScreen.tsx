@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { Question } from '../../types';
-import { PRACTICE_QUESTION_COUNT, PRACTICE_PASS_PERCENTAGE } from '../../constants';
-import { QuestionEngine } from '../../services/questionEngine';
-import BackButton from '../common/BackButton';
-import ProgressBar from '../common/ProgressBar';
+import { Question } from '../../types.ts';
+import { PRACTICE_QUESTION_COUNT, PRACTICE_PASS_PERCENTAGE } from '../../constants.ts';
+import { QuestionEngine } from '../../services/questionEngine.ts';
+import BackButton from '../common/BackButton.tsx';
+import ProgressBar from '../common/ProgressBar.tsx';
 
 interface PracticeScreenProps {
   grade: string;

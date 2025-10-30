@@ -1,7 +1,7 @@
 
 import React from 'react';
-import BackButton from '../common/BackButton';
-import ProgressBar from '../common/ProgressBar';
+import BackButton from '../common/BackButton.tsx';
+import ProgressBar from '../common/ProgressBar.tsx';
 
 interface TopicSelectionScreenProps {
   grade: string;

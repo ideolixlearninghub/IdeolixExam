@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Student } from '../../types.ts';
-import { GRADES, ASSESSMENT_QUESTION_COUNT, ASSESSMENT_PASS_PERCENTAGE } from '../../constants.ts';
+import { Student } from '../../types';
+import { GRADES, ASSESSMENT_QUESTION_COUNT, ASSESSMENT_PASS_PERCENTAGE } from '../../constants';
 
 interface DashboardScreenProps {
   student: Student;

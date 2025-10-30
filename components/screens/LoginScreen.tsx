@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { GRADES } from '../../constants';
+import { GRADES } from '../../constants.ts';
 
 interface LoginScreenProps {
   onLogin: (name: string, grade: string) => void;
