@@ -47,18 +47,1083 @@
 </script>
   </head>
   <body class="bg-brand-light-secondary dark:bg-brand-dark text-brand-dark dark:text-brand-light">
-    <div id="root">
-      <!-- This static content will show while the app is loading -->
-      <div class="min-h-screen flex items-center justify-center">
-        <div class="text-center">
-          <h1 class="text-4xl font-bold text-brand-orange mb-4">Ideolix Learning Hub</h1>
-          <p class="text-lg text-brand-dark dark:text-brand-light mb-6">Loading application...</p>
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-green mx-auto"></div>
+    <div id="root"></div>
+    <script type="text/babel" data-type="module">
+// --- Start of combined script ---
+
+// External Imports
+import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom/client';
+import { GoogleGenAI, Type } from "@google/genai";
+
+
+// --- Inlined from: constants.ts ---
+const GRADES = [
+  'Kindergarten', 'Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5',
+  'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'
+];
+
+const CURRICULUM = {
+    'Kindergarten': {
+        "Math": ["Counting to 100", "Writing Numbers 0-20", "Comparing Numbers", "Intro to Addition & Subtraction", "Identifying Shapes", "Measurement Basics"],
+        "Science": ["Pushes and Pulls", "Needs of Plants and Animals", "Observing Weather Patterns", "The Five Senses", "Classifying Materials"],
+        "Literature Arts": ["Alphabet Recognition (Upper/Lowercase)", "Phonemic Awareness (Sounds)", "Identifying Characters & Setting", "Answering Questions about a Story", "Writing Letters & Simple Words"]
+    },
+    'Grade 1': {
+        "Math": ["Addition & Subtraction within 20", "Place Value (Tens and Ones)", "Counting to 120", "Telling Time (Hour and Half-Hour)", "Understanding Halves and Quarters", "Measuring Length"],
+        "Science": ["Light and Sound", "Animal and Plant Structures", "Patterns of Sun, Moon, and Stars", "Life Cycles", "Inheritance of Traits"],
+        "Literature Arts": ["Retelling Stories with Key Details", "Reading with Fluency", "Writing Opinion Pieces", "Writing Narratives", "Using Commas and End Punctuation"]
+    },
+    'Grade 2': {
+        "Math": ["Addition & Subtraction within 1000", "Place Value (Hundreds)", "Foundations of Multiplication", "Working with Money", "Measuring Length in Standard Units", "Telling Time to 5 Minutes"],
+        "Science": ["Properties of Matter", "Ecosystems & Interdependence", "Earth's Processes (Erosion)", "Plant Growth and Needs", "Animal Habitats"],
+        "Literature Arts": ["Comparing Two Versions of a Story", "Writing Informative Texts", "Using Adjectives and Adverbs", "Understanding Collective Nouns", "Using Apostrophes in Contractions"]
+    },
+    'Grade 3': {
+        "Math": ["Multiplication & Division within 100", "Understanding Fractions as Numbers", "Area and Perimeter", "Telling Time to the Minute", "Interpreting Bar Graphs and Pictographs", "Rounding Numbers"],
+        "Science": ["Forces and Interactions (Magnetism)", "Life Cycles and Traits", "Weather and Climate Impacts", "Understanding Fossils", "Ecosystem Dynamics"],
+        "Literature Arts": ["Determining the Main Idea and Details", "Understanding Character's Point of View", "Writing Narrative Stories with Dialogue", "Using Conjunctions", "Forming Possessives"]
+    },
+    'Grade 4': {
+        "Math": ["Multi-digit Multiplication", "Multi-digit Division", "Fraction Equivalence and Ordering", "Adding and Subtracting Fractions", "Understanding Decimals and Fractions", "Lines and Angles"],
+        "Science": ["Energy Transfer and Waves", "Plant and Animal Structures/Functions", "Earth's Surface Processes (Erosion)", "Properties of Light", "Renewable & Non-renewable Resources"],
+        "Literature Arts": ["Citing Textual Evidence", "Analyzing Story Themes", "Writing Opinion Pieces with Reasons", "Figurative Language (Similes & Metaphors)", "Formal vs. Informal Language"]
+    },
+    'Grade 5': {
+        "Math": ["Multiplying and Dividing Fractions", "Operations with Decimals", "Understanding Volume of Prisms", "Graphing on the Coordinate Plane", "Order of Operations (PEMDAS)", "Classifying 2D Figures"],
+        "Science": ["Structure and Properties of Matter (Atoms)", "Energy in Ecosystems (Food Webs)", "Earth's Systems (Water Cycle, Atmosphere)", "The Solar System and Gravity", "Mixtures and Solutions"],
+        "Literature Arts": ["Integrating Information from Multiple Texts", "Comparing Story Structures (e.g., plays, poems)", "Writing Research Reports", "Understanding Perfect Verb Tenses", "Using Correlative Conjunctions"]
+    },
+    'Grade 6': {
+        "Math": ["Ratios & Proportional Relationships", "Dividing Fractions by Fractions", "Operations with Integers (Negative Numbers)", "Solving One-Variable Equations", "Statistical Variability (Mean, Median, Mode)"],
+        "Science": ["Space Systems (Earth-Sun-Moon)", "Weather and Climate Systems", "Human Impact on Environment", "Cells and the Basis of Life", "Thermal Energy Transfer"],
+        "Literature Arts": ["Analyzing Plot and Character Development", "Citing Evidence to Support Analysis", "Writing Arguments with Claims and Evidence", "Using Pronouns Correctly (e.g., intensive)", "Varying Sentence Patterns"]
+    },
+    'Grade 7': {
+        "Math": ["Analyzing Proportional Relationships", "Operations with Rational Numbers", "Solving Multi-Step Equations & Inequalities", "Geometry: Area and Circumference of Circles", "Simple and Compound Probability"],
+        "Science": ["Cell Structure and Function", "Photosynthesis and Cellular Respiration", "Ecosystems and Population Dynamics", "Natural Selection and Adaptations", "Properties of Waves and Energy"],
+        "Literature Arts": ["Determining Theme and Central Idea", "Analyzing Author's Purpose and Point of View", "Writing Informative Texts with Evidence", "Using Phrases and Clauses in Sentences", "Spelling and Academic Vocabulary"]
+    },
+    'Grade 8': {
+        "Math": ["Understanding Irrational Numbers", "Solving Linear Equations and Systems of Equations", "Defining, Evaluating, and Comparing Functions", "The Pythagorean Theorem", "Investigating Bivariate Data (Scatter Plots)"],
+        "Science": ["Newton's Laws of Motion", "Structure of Matter (Periodic Table Intro)", "Chemical Reactions (Balancing Equations)", "Genetics and Heredity (Punnett Squares)", "Earth's History (Geologic Time)"],
+        "Literature Arts": ["Analyzing Dialogue and Incidents in Fiction", "Evaluating an Author's Argument and Claims", "Writing Narratives with Pacing and Dialogue", "Understanding Active and Passive Voice", "Using Verbs in Different Moods"]
+    },
+    'Grade 9': {
+        "Math": ["Solving Quadratic Equations", "Graphing Linear, Quadratic, and Exponential Functions", "Geometric Congruence and Proofs", "Introduction to Trigonometry (SOHCAHTOA)", "Interpreting Categorical and Quantitative Data"],
+        "Science": ["Cellular Biology (Organelles, Transport)", "Ecosystem Dynamics and Energy Flow", "Introduction to Chemistry (Atoms, Bonding)", "Kinematics (Motion, Velocity, Acceleration)", "Designing Scientific Investigations"],
+        "Literature Arts": ["Analyzing Themes in Literature Across Cultures", "Writing Persuasive Essays with Counterclaims", "Understanding Symbolism and Allegory", "Advanced Grammar and Parallel Structure", "Analyzing Foundational U.S. Documents"]
+    },
+    'Grade 10': {
+        "Math": ["Advanced Polynomial Functions", "Trigonometric Functions and the Unit Circle", "Similarity and Geometric Proofs", "Probability of Compound and Conditional Events", "Understanding and Using Logarithms"],
+        "Science": ["Genetics and DNA Technology", "Principles of Evolutionary Biology", "Chemical Reactions and Stoichiometry", "Thermodynamics and Energy Transfer", "Earth's Systems and Global Climate Change"],
+        "Literature Arts": ["Analyzing World Literature", "Writing Argumentative Essays with Synthesized Evidence", "Identifying Irony and Satire", "Rhetorical Analysis of Speeches", "Building Vocabulary from Word Roots"]
+    },
+    'Grade 11': {
+        "Math": ["Graphing and Analyzing Advanced Functions (Rational, Logarithmic)", "Trigonometric Identities", "Introduction to Vectors and Matrices", "Statistical Inference and Margin of Error", "Arithmetic and Geometric Sequences and Series"],
+        "Science": ["Advanced Cell Biology and Processes", "Introduction to Organic Chemistry", "Physics: Mechanics, Waves, and Optics", "Human Anatomy and Physiology", "Environmental Science and Sustainability"],
+        "Literature Arts": ["Analyzing American Literature by Period", "Writing Analytical and Research-Based Essays", "Understanding Literary Movements and their Context", "Evaluating an Author's Style and Purpose", "Advanced Rhetoric and Persuasion"]
+    },
+    'Grade 12': {
+        "Math": ["Calculus: Limits & Continuity", "Calculus: Derivatives and Applications", "Calculus: Integrals and Applications", "Advanced Statistics and Probability Models", "Linear Algebra Concepts"],
+        "Science": ["Molecular Biology (DNA/RNA, Biotechnology)", "Organic Chemistry Reactions", "Physics: Electricity & Magnetism", "Advanced Anatomy and Physiology", "Designing and Conducting Scientific Research"],
+        "Literature Arts": ["Principles of Literary Criticism", "Analyzing British Literature by Period", "Synthesizing Ideas in Research Papers", "Rhetorical Analysis of Complex Texts", "Preparing a Major Research Paper"]
+    }
+};
+
+const PRACTICE_QUESTION_COUNT = 30;
+const ASSESSMENT_QUESTION_COUNT = 60;
+const PRACTICE_PASS_PERCENTAGE = 0.8; // 80%
+const ASSESSMENT_PASS_PERCENTAGE = 0.85; // 85%
+
+// --- Inlined from: services/questionEngine.ts ---
+const QuestionEngine = (() => {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const shuffle = (array) => {
+        const newArr = [...array];
+        for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+        }
+        return newArr;
+    };
+
+    const questionsBatchSchema = {
+        type: Type.OBJECT,
+        properties: {
+            questions: {
+                type: Type.ARRAY,
+                description: "An array of quiz questions.",
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        questionText: { type: Type.STRING, description: "The text of the question." },
+                        correctAnswer: { type: Type.STRING, description: "The correct answer." },
+                        options: {
+                            type: Type.ARRAY,
+                            description: "An array of 4 strings: 3 incorrect distractors and the correct answer.",
+                            items: { type: Type.STRING }
+                        },
+                        questionType: { type: Type.STRING, description: "Should always be 'multiple-choice'." }
+                    },
+                    required: ['questionText', 'correctAnswer', 'options', 'questionType']
+                }
+            }
+        },
+        required: ['questions']
+    };
+
+    const generateBatch = async (grade, subject, topics, count) => {
+        if (!topics || topics.length === 0) return [];
+        
+        const prompt = `You are an expert educator creating a batch of ${count} grade-appropriate, multiple-choice quiz questions for a learning app.
+- Grade: ${grade}
+- Subject: ${subject}
+- Topics to cover: ${shuffle(topics).slice(0, 5).join(', ')}
+
+Create a diverse set of questions covering the specified topics. Each question should be challenging but suitable for the student's grade level. For each question, ensure the incorrect options (distractors) are plausible and represent common misconceptions. Provide 4 options in total for each question.`;
+
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt,
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: questionsBatchSchema,
+                },
+            });
+
+            const jsonText = response.text.trim();
+            const batchData = JSON.parse(jsonText);
+            
+            if (batchData.questions && batchData.questions.length > 0) {
+                return batchData.questions.map(q => {
+                    if (!q.options.includes(q.correctAnswer)) {
+                        q.options.pop();
+                        q.options.push(q.correctAnswer);
+                    }
+                    return { ...q, options: shuffle(q.options) };
+                });
+            }
+            throw new Error("Invalid batch format received from AI.");
+
+        } catch (error) {
+            console.error("AI question batch generation failed:", error);
+            const fallbackQuestions = [];
+            for (let i = 0; i < count; i++) {
+                const topic = topics[i % topics.length] || 'the subject';
+                fallbackQuestions.push({
+                    questionText: `This is a fallback question for "${topic}". Which of these is a number?`,
+                    correctAnswer: '3',
+                    options: shuffle(['A', 'B', 'C', '3']),
+                    questionType: 'multiple-choice'
+                });
+            }
+            return fallbackQuestions;
+        }
+    };
+    
+    return { generateBatch };
+})();
+
+// --- Inlined from: components/common/Logo.tsx ---
+const Logo = () => {
+  return (
+    <div className="flex items-center space-x-3">
+      <img 
+        src="https://raw.githubusercontent.com/ideolixlearninghub/ideolix-web/main/ideolix%20LOGO.jpg" 
+        alt="Ideolix Logo" 
+        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white/50"
+      />
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-brand-dark dark:text-brand-light">
+        Ideolix
+      </h1>
+    </div>
+  );
+};
+
+// --- Inlined from: components/common/BackButton.tsx ---
+const BackButton = ({ onClick, text = "Back" }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center text-brand-orange hover:underline mb-6 text-sm font-semibold"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+      {text}
+    </button>
+  );
+};
+
+// --- Inlined from: components/common/ProgressBar.tsx ---
+const ProgressBar = ({ current, total }) => {
+  const percentage = total > 0 ? (current / total) * 100 : 0;
+  return (
+    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+      <div
+        className="bg-brand-green h-2.5 rounded-full transition-all duration-500"
+        style={{ width: `${percentage}%` }}
+      ></div>
+    </div>
+  );
+};
+
+// --- Inlined from: components/screens/LoginScreen.tsx ---
+const LoginScreen = ({ onLogin }) => {
+  const [name, setName] = useState('');
+  const [grade, setGrade] = useState(GRADES[0]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (name.trim()) {
+      onLogin(name.trim(), grade);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white dark:bg-brand-dark-secondary rounded-xl shadow-lg">
+        <h2 className="text-3xl font-bold text-center">Welcome to Ideolix!</h2>
+        <p className="text-center text-gray-600 dark:text-gray-300">Let's get started. Please enter your details.</p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium">Name</label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 bg-white dark:bg-brand-dark border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-orange focus:border-brand-orange"
+              placeholder="Your Name"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="grade" className="block text-sm font-medium">Grade</label>
+            <select
+              id="grade"
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-white dark:bg-brand-dark border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-brand-orange focus:border-brand-orange rounded-md"
+            >
+              {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+          <button
+            type="submit"
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-orange hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-orange transition-transform transform hover:scale-105"
+          >
+            Start Learning
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// --- Inlined from: components/screens/DashboardScreen.tsx ---
+const AssessmentHistory = ({ assessments }) => {
+  if (assessments.length === 0) {
+    return (
+      <div className="mt-12 text-center p-6 bg-white dark:bg-brand-dark-secondary rounded-lg shadow-md">
+        <h3 className="text-xl font-bold mb-2">Assessment History</h3>
+        <p className="text-gray-500 dark:text-gray-400">You haven't completed any assessments yet. Keep practicing!</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-12 bg-white dark:bg-brand-dark-secondary rounded-xl shadow-lg p-6">
+      <h3 className="text-2xl font-bold mb-4">Assessment History</h3>
+      <div className="space-y-4 max-h-96 overflow-y-auto">
+        {assessments.slice().reverse().map((assessment, index) => (
+          <div key={index} className="flex justify-between items-center p-4 bg-brand-light-secondary dark:bg-gray-700 rounded-lg">
+            <div>
+              <p className="font-bold text-gray-800 dark:text-gray-100">{assessment.subject} - {assessment.grade}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {new Date(assessment.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xl font-bold text-brand-green">{assessment.score} / {ASSESSMENT_QUESTION_COUNT}</p>
+              <p className={`font-semibold ${assessment.score / ASSESSMENT_QUESTION_COUNT >= ASSESSMENT_PASS_PERCENTAGE ? 'text-green-500' : 'text-orange-500'}`}>
+                {((assessment.score / ASSESSMENT_QUESTION_COUNT) * 100).toFixed(0)}%
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const DashboardScreen = ({ student, onSelectGrade }) => {
+  return (
+    <div>
+      <h2 className="text-3xl font-bold mb-2">Welcome back, {student.name}!</h2>
+      <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">Choose a grade to continue your learning journey.</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {GRADES.map((grade) => (
+          <button
+            key={grade}
+            onClick={() => onSelectGrade(grade)}
+            className="p-4 bg-white dark:bg-brand-dark-secondary rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-center font-semibold text-brand-dark dark:text-brand-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-orange"
+          >
+            {grade}
+          </button>
+        ))}
+      </div>
+       <AssessmentHistory assessments={student.assessments} />
+    </div>
+  );
+};
+
+// --- Inlined from: components/screens/SubjectSelectionScreen.tsx ---
+const SubjectIcon = ({ subject }) => {
+  const icons = {
+    'Math': (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M12 8h.01M15 8h.01M15 14h.01M18 17h.01M12 17h.01M15 17h.01" /></svg>
+    ),
+    'Science': (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547a2 2 0 00-.547 1.806l.477 2.387a6 6 0 00.517 3.86l.158.318a6 6 0 00.517 3.86l2.387.477a2 2 0 001.806-.547a2 2 0 00.547-1.806l-.477-2.387a6 6 0 00-.517-3.86l-.158-.318a6 6 0 00-.517-3.86l-2.387-.477z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.354 5.646a5 5 0 11-7.07 0 5 5 0 017.07 0z" /></svg>
+    ),
+    'Literature Arts': (
+       <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v11.494m-9-5.747h18" /></svg>
+    ),
+  };
+  return icons[subject] || null;
+};
+
+const SubjectSelectionScreen = ({ grade, onSelectSubject, onBack }) => {
+  const subjects = Object.keys(CURRICULUM[grade] || {});
+  
+  const subjectColors = {
+    'Math': 'from-blue-500 to-indigo-600',
+    'Science': 'from-green-500 to-emerald-600',
+    'Literature Arts': 'from-amber-500 to-orange-600',
+  }
+
+  return (
+    <div>
+      <BackButton onClick={onBack} text="Back to Grades" />
+      <h2 className="text-3xl font-bold mb-2">Subjects for {grade}</h2>
+      <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">What would you like to practice today?</p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {subjects.map((subject) => (
+          <button
+            key={subject}
+            onClick={() => onSelectSubject(subject)}
+            className={`p-8 flex flex-col items-center justify-center text-white text-2xl font-bold rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 bg-gradient-to-br ${subjectColors[subject] || 'from-gray-500 to-gray-700'}`}
+          >
+            <SubjectIcon subject={subject} />
+            {subject}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- Inlined from: components/screens/TopicSelectionScreen.tsx ---
+const TopicSelectionScreen = ({ grade, subject, progress, allTopics, onSelectTopic, onStartAssessment, onBack }) => {
+  const canTakeAssessment = allTopics.length > 0 && allTopics.every(topic => (progress[topic] || 0) >= 5);
+
+  return (
+    <div>
+      <BackButton onClick={onBack} text={`Back to Subjects`}/>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h2 className="text-3xl font-bold">{subject} Topics</h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300">Select a topic to practice or take an assessment.</p>
+        </div>
+        <button
+          onClick={onStartAssessment}
+          disabled={!canTakeAssessment}
+          className="w-full md:w-auto px-6 py-3 font-bold text-white bg-brand-green rounded-lg shadow-md transition-all duration-200 enabled:hover:bg-opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed transform enabled:hover:scale-105"
+        >
+          {canTakeAssessment ? 'Start Assessment' : 'Master All Topics to Unlock'}
+        </button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {allTopics.map((topic) => {
+          const completedLevel = progress[topic] || 0;
+          const isMastered = completedLevel >= 5;
+
+          return (
+            <div
+              key={topic}
+              onClick={() => onSelectTopic(topic)}
+              className="bg-white dark:bg-brand-dark-secondary p-6 rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer relative"
+            >
+              {isMastered && (
+                 <div className="absolute top-3 right-3 flex items-center bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                   Mastered
+                 </div>
+              )}
+              <h3 className="text-xl font-bold mb-2 pr-16">{topic}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Level {completedLevel} / 5 completed</p>
+              <ProgressBar current={completedLevel} total={5} />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  );
+};
+
+// --- Inlined from: components/screens/LevelSelectionScreen.tsx ---
+const LockIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute top-2 right-2 text-gray-400 dark:text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 8a6 6 0 01-7.743 5.743L10 14l-1 1-1 1H6v2H2v-4l4.257-4.257A6 6 0 1118 8zm-6-4a4 4 0 100 8 4 4 0 000-8z" clipRule="evenodd" /></svg>;
+const StarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute top-2 right-2 text-yellow-300" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>;
+
+const LevelSelectionScreen = ({ topic, completedLevel, onSelectLevel, onBack }) => {
+  const levels = [1, 2, 3, 4, 5];
+
+  return (
+    <div>
+      <BackButton onClick={onBack} text="Back to Topics"/>
+      <h2 className="text-3xl font-bold mb-2">Topic: {topic}</h2>
+      <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">Select a level to begin practice. You must complete a level to unlock the next one.</p>
+      <div className="flex flex-wrap justify-center gap-4">
+        {levels.map((level) => {
+          const isLocked = level > completedLevel + 1;
+          const isCompleted = level <= completedLevel;
+          
+          return (
+            <button
+              key={level}
+              onClick={() => onSelectLevel(level)}
+              disabled={isLocked}
+              className={`w-32 h-32 relative flex flex-col items-center justify-center rounded-lg shadow-lg font-bold text-xl transition-all duration-200
+                ${isLocked 
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 cursor-not-allowed' 
+                  : isCompleted 
+                  ? 'bg-brand-green text-white transform hover:scale-105'
+                  : 'bg-brand-orange text-white transform hover:scale-105'
+                }
+              `}
+            >
+              {isLocked && <LockIcon />}
+              {isCompleted && <StarIcon />}
+              <span>Level {level}</span>
+              <span className="text-xs mt-1 font-normal">
+                {isCompleted ? '(Completed)' : isLocked ? '' : 'Start'}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// --- Inlined from: components/screens/PracticeScreen.tsx ---
+const PracticeScreen = ({ grade, subject, topic, level, onComplete, onBack }) => {
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [feedback, setFeedback] = useState('unanswered');
+  const [correctAnswersCount, setCorrectAnswersCount] = useState(0);
+  const [isSessionOver, setIsSessionOver] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+        setIsLoading(true);
+        const fetchedQuestions = await QuestionEngine.generateBatch(grade, subject, [topic], PRACTICE_QUESTION_COUNT);
+        setQuestions(fetchedQuestions);
+        setIsLoading(false);
+    };
+
+    fetchQuestions();
+  }, [grade, subject, topic, level]);
+
+  const handleAnswerSubmit = () => {
+    if (feedback !== 'unanswered') return;
+
+    const currentQuestion = questions[currentQuestionIndex];
+    if (userAnswer.trim().toLowerCase() === currentQuestion.correctAnswer.toLowerCase()) {
+      setFeedback('correct');
+      setCorrectAnswersCount(prev => prev + 1);
+    } else {
+      setFeedback('incorrect');
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setFeedback('unanswered');
+      setUserAnswer('');
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      setIsSessionOver(true);
+    }
+  };
+  
+  const handleSessionEnd = (passed) => {
+    if (passed) {
+      onComplete(level);
+    } else {
+      onBack();
+    }
+  };
+
+  if (isLoading) {
+      return <div className="text-center p-10">Crafting your questions...</div>;
+  }
+  if (!questions || questions.length === 0) return <div className="text-center p-10">Could not load questions. Please try again.</div>;
+
+  if (isSessionOver) {
+    const score = correctAnswersCount;
+    const total = questions.length;
+    const percentage = total > 0 ? (score / total) : 0;
+    const passed = percentage >= PRACTICE_PASS_PERCENTAGE;
+
+    return (
+      <div className="text-center p-6 sm:p-10 bg-white dark:bg-brand-dark-secondary rounded-xl shadow-lg flex flex-col items-center">
+        <h2 className={`text-4xl font-bold mb-4 ${passed ? 'text-brand-green' : 'text-brand-orange'}`}>
+          {passed ? 'Level Complete!' : 'Keep Practicing!'}
+        </h2>
+        <p className="text-lg mb-2">You scored:</p>
+        <p className="text-6xl font-extrabold mb-1">{score}<span className="text-3xl text-gray-400">/{total}</span></p>
+        <p className="text-2xl font-bold mb-6">{`(${(percentage * 100).toFixed(0)}%)`}</p>
+        <p className="mb-8 max-w-md text-gray-600 dark:text-gray-300">
+          {passed 
+            ? `Great job! You've mastered Level ${level}. The next level is now unlocked.`
+            : `You need to score at least ${(PRACTICE_PASS_PERCENTAGE * 100)}% to pass. Don't give up, try again!`
+          }
+        </p>
+        <button 
+          onClick={() => handleSessionEnd(passed)}
+          className="px-8 py-3 font-bold text-white bg-brand-orange rounded-lg shadow-md hover:bg-opacity-90 transition-transform transform hover:scale-105"
+        >
+          {passed ? 'Continue' : 'Back to Levels'}
+        </button>
+      </div>
+    );
+  }
+
+  const currentQuestion = questions[currentQuestionIndex];
+
+  return (
+    <div>
+      <BackButton onClick={onBack} text="Back to Levels"/>
+      <h2 className="text-2xl font-bold mb-2">{topic} - Level {level}</h2>
+      <div className="mb-4">
+        <ProgressBar current={currentQuestionIndex + 1} total={questions.length} />
+        <p className="text-right text-sm mt-1">Question {currentQuestionIndex + 1} of {questions.length}</p>
+      </div>
+      
+      <div className="bg-white dark:bg-brand-dark-secondary p-8 rounded-lg shadow-lg">
+        <p className="text-xl mb-6">{currentQuestion.questionText}</p>
+        
+        {currentQuestion.questionType === 'multiple-choice' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {currentQuestion.options?.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => setUserAnswer(option)}
+                disabled={feedback !== 'unanswered'}
+                className={`p-4 rounded-lg border-2 text-left transition-colors ${
+                  userAnswer === option
+                    ? 'bg-brand-orange-light border-brand-orange dark:bg-opacity-20'
+                    : 'bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-brand-orange'
+                } disabled:cursor-not-allowed`}
+              >{option}</button>
+            ))}
+          </div>
+        )}
+
+        {currentQuestion.questionType === 'typed' && (
+          <input
+            type="text"
+            value={userAnswer}
+            onChange={(e) => setUserAnswer(e.target.value)}
+            disabled={feedback !== 'unanswered'}
+            className="w-full px-4 py-2 bg-white dark:bg-brand-dark border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-orange focus:border-brand-orange"
+            placeholder="Type your answer here"
+          />
+        )}
+        
+        <div className="mt-6">
+          {feedback === 'unanswered' ? (
+            <button onClick={handleAnswerSubmit} disabled={!userAnswer} className="w-full sm:w-auto px-6 py-3 font-bold text-white bg-brand-orange rounded-lg shadow-md enabled:hover:bg-opacity-90 disabled:bg-gray-400">Submit</button>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <div className={`p-4 rounded-lg w-full font-semibold ${feedback === 'correct' ? 'bg-brand-green-light text-green-800' : 'bg-brand-orange-light text-red-800'}`}>
+                {feedback === 'correct' ? 'Correct!' : `Incorrect. The correct answer is: ${currentQuestion.correctAnswer}`}
+              </div>
+              <button onClick={handleNextQuestion} className="w-full sm:w-auto px-6 py-3 font-bold text-white bg-brand-green rounded-lg shadow-md hover:bg-opacity-90 flex-shrink-0">
+                {currentQuestionIndex === questions.length - 1 ? 'Finish' : 'Next Question'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
+  );
+};
+
+// --- Inlined from: components/screens/AssessmentScreen.tsx ---
+const AssessmentScreen = ({ grade, subject, onPass, onBack }) => {
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [userAnswers, setUserAnswers] = useState([]);
+  const [score, setScore] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [assessmentKey, setAssessmentKey] = useState(0);
+
+  const ASSESSMENT_DURATION_SECONDS = ASSESSMENT_QUESTION_COUNT * 60;
+  const [timeLeft, setTimeLeft] = useState(ASSESSMENT_DURATION_SECONDS);
+
+  const fetchQuestions = useCallback(async () => {
+    setIsLoading(true);
+    const topicsForAssessment = CURRICULUM[grade]?.[subject] || [];
+    const fetchedQuestions = await QuestionEngine.generateBatch(grade, subject, topicsForAssessment, ASSESSMENT_QUESTION_COUNT);
+    setQuestions(fetchedQuestions);
+    setUserAnswers(Array(fetchedQuestions.length).fill(''));
+    setIsLoading(false);
+  }, [grade, subject]);
+
+  useEffect(() => {
+    if (grade && subject) {
+      fetchQuestions();
+    }
+  }, [grade, subject, assessmentKey, fetchQuestions]);
+
+  const handleSubmit = useCallback(() => {
+    if (score !== null) return;
+    let finalScore = 0;
+    questions.forEach((q, index) => {
+      if (userAnswers[index] && userAnswers[index].trim().toLowerCase() === q.correctAnswer.toLowerCase()) {
+        finalScore++;
+      }
+    });
+    setScore(finalScore);
+  }, [score, questions, userAnswers]);
+  
+  const handleAnswerChange = (answer) => {
+    const newAnswers = [...userAnswers];
+    newAnswers[currentQuestionIndex] = answer;
+    setUserAnswers(newAnswers);
+  };
+
+  const handleNext = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+  
+  const handleRetake = () => {
+      setScore(null);
+      setTimeLeft(ASSESSMENT_DURATION_SECONDS);
+      setCurrentQuestionIndex(0);
+      setAssessmentKey(prev => prev + 1);
+  };
+  
+  useEffect(() => {
+    if (score !== null || isLoading) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft(prevTime => {
+        if (prevTime <= 1) {
+          clearInterval(timer);
+          handleSubmit();
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [score, isLoading, handleSubmit]);
+
+  if (isLoading) {
+      return <div className="text-center p-10"><h3>Building your assessment...</h3></div>;
+  }
+  if (!questions || questions.length === 0) return <div className="text-center p-10">Could not load assessment. Please try again.</div>;
+
+  if (score !== null) {
+    const passed = (score / ASSESSMENT_QUESTION_COUNT) >= ASSESSMENT_PASS_PERCENTAGE;
+    return (
+      <div className="text-center p-10 bg-white dark:bg-brand-dark-secondary rounded-xl shadow-lg">
+        {passed ? (
+            <>
+                <h2 className="text-4xl font-bold text-brand-green mb-4">Congratulations! You Passed!</h2>
+                <p className="text-2xl mb-2">Your Score:</p>
+                <p className="text-6xl font-bold mb-8">{score} <span className="text-3xl text-gray-500">/ {ASSESSMENT_QUESTION_COUNT}</span></p>
+                <button onClick={() => onPass(score)} className="px-8 py-4 font-bold text-white bg-brand-green rounded-lg shadow-md hover:bg-opacity-90">View Certificate</button>
+            </>
+        ) : (
+            <>
+                <h2 className="text-4xl font-bold text-brand-orange mb-4">Keep Practicing!</h2>
+                <p className="text-2xl mb-2">Your Score:</p>
+                <p className="text-6xl font-bold mb-4">{score} <span className="text-3xl text-gray-500">/ {ASSESSMENT_QUESTION_COUNT}</span></p>
+                <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">You need to score 85% or higher to pass. Don't give up!</p>
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
+                     <button onClick={handleRetake} className="px-8 py-4 font-bold text-white bg-brand-orange rounded-lg shadow-md hover:bg-opacity-90">Retake Assessment</button>
+                     <button onClick={onBack} className="px-8 py-4 font-semibold text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 rounded-lg shadow-md">Back to Topics</button>
+                </div>
+            </>
+        )}
+      </div>
+    );
+  }
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const userAnswer = userAnswers[currentQuestionIndex];
+
+  return (
+    <div>
+      <BackButton onClick={onBack} text="Back to Topics"/>
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-2 gap-4">
+        <h2 className="text-2xl font-bold">{subject} Assessment</h2>
+        <div className={`text-lg font-semibold px-4 py-2 rounded-lg transition-colors ${timeLeft <= 60 ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-brand-orange-light text-brand-dark'}`}>
+          Time Left: {formatTime(timeLeft)}
+        </div>
+      </div>
+      <div className="mb-4">
+        <ProgressBar current={currentQuestionIndex + 1} total={questions.length} />
+        <p className="text-right text-sm mt-1">Question {currentQuestionIndex + 1} of {questions.length}</p>
+      </div>
+      
+      <div className="bg-white dark:bg-brand-dark-secondary p-8 rounded-lg shadow-lg">
+        <p className="text-xl mb-6">{currentQuestion.questionText}</p>
+        
+        {currentQuestion.questionType === 'multiple-choice' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {currentQuestion.options?.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => handleAnswerChange(option)}
+                className={`p-4 rounded-lg border-2 text-left transition-colors ${
+                  userAnswer === option
+                    ? 'bg-brand-orange-light border-brand-orange dark:bg-opacity-20'
+                    : 'bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:border-brand-orange'
+                }`}
+              >{option}</button>
+            ))}
+          </div>
+        )}
+
+        {currentQuestion.questionType === 'typed' && (
+          <input
+            type="text"
+            value={userAnswer}
+            onChange={(e) => handleAnswerChange(e.target.value)}
+            className="w-full px-4 py-2 bg-white dark:bg-brand-dark border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-brand-orange focus:border-brand-orange"
+            placeholder="Type your answer here"
+          />
+        )}
+        
+        <div className="mt-8 flex justify-between items-center">
+          <button onClick={handlePrev} disabled={currentQuestionIndex === 0} className="px-6 py-2 font-semibold text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-600 rounded-lg disabled:opacity-50">Previous</button>
+          {currentQuestionIndex === questions.length - 1 ? (
+             <button onClick={handleSubmit} className="px-6 py-3 font-bold text-white bg-brand-green rounded-lg shadow-md hover:bg-opacity-90">Finish Assessment</button>
+          ) : (
+            <button onClick={handleNext} className="px-6 py-2 font-semibold text-white bg-brand-orange rounded-lg">Next</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Inlined from: components/screens/CertificateScreen.tsx ---
+const CertificateScreen = ({ data, onBack }) => {
+    const { name, grade, subject, score } = data;
+    const percentage = ((score / ASSESSMENT_QUESTION_COUNT) * 100).toFixed(0);
+
+    const handlePrint = () => {
+        window.print();
+    };
+
+    return (
+        <div>
+            <style>{`
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    #certificate-wrapper, #certificate-wrapper * {
+                        visibility: visible;
+                    }
+                    #certificate-wrapper {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                    }
+                    .no-print {
+                        display: none;
+                    }
+                }
+            `}</style>
+            <div className="no-print">
+                <BackButton onClick={onBack} text="Back to Topics" />
+            </div>
+            <div id="certificate-wrapper">
+                <div className="bg-white dark:bg-brand-dark-secondary p-8 rounded-lg shadow-2xl border-4 border-brand-orange max-w-4xl mx-auto">
+                    <div className="text-center border-b-2 border-gray-300 pb-4">
+                        <img src="https://raw.githubusercontent.com/ideolixlearninghub/ideolix-web/main/ideolix%20LOGO.jpg" alt="Ideolix Logo" className="w-20 h-20 mx-auto rounded-full mb-4" />
+                        <h1 className="text-4xl font-extrabold text-brand-dark dark:text-brand-light">Certificate of Achievement</h1>
+                        <p className="text-lg text-gray-500 dark:text-gray-400 mt-2">Proudly Presented To</p>
+                    </div>
+                    <div className="text-center my-10">
+                        <h2 className="text-5xl font-bold text-brand-orange tracking-wider">{name}</h2>
+                    </div>
+                    <div className="text-center text-xl text-brand-dark dark:text-brand-light space-y-2">
+                        <p>For successfully demonstrating mastery in</p>
+                        <p className="font-bold text-2xl">{grade} {subject}</p>
+                    </div>
+                    <div className="text-center my-8">
+                        <p className="text-lg">with a score of</p>
+                        <p className="text-4xl font-bold text-brand-green">{percentage}%</p>
+                        <p className="text-sm text-gray-500">({score} / {ASSESSMENT_QUESTION_COUNT} correct)</p>
+                    </div>
+                    <div className="text-center text-lg text-gray-600 dark:text-gray-300 mt-6 italic">
+                        <p>"Congratulations on your hard work and dedication! Your commitment to learning is truly inspiring. Keep reaching for the stars!"</p>
+                    </div>
+                    <div className="mt-12 flex justify-between items-end">
+                        <div>
+                            <p className="border-t-2 border-gray-400 pt-1 px-4 text-sm font-semibold">Date</p>
+                            <p className="px-4 text-sm">{new Date().toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-center">
+                             <h3 className="font-bold text-lg">Ideolix Learning Hub</h3>
+                             <p className="text-sm">An Ideolix Platform</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div className="text-center mt-8 no-print">
+                <button onClick={handlePrint} className="px-8 py-3 font-bold text-white bg-brand-green rounded-lg shadow-md hover:bg-opacity-90 transition-transform transform hover:scale-105 mr-4">
+                    Print Certificate
+                </button>
+                <button onClick={onBack} className="px-8 py-3 font-bold text-white bg-brand-orange rounded-lg shadow-md hover:bg-opacity-90 transition-transform transform hover:scale-105">
+                    Back to Topics
+                </button>
+            </div>
+        </div>
+    );
+};
+
+
+// --- Inlined from: App.tsx ---
+const App = () => {
+  const [student, setStudent] = useState(null);
+  const [view, setView] = useState('login');
+  const [currentGrade, setCurrentGrade] = useState(null);
+  const [currentSubject, setCurrentSubject] = useState(null);
+  const [currentTopic, setCurrentTopic] = useState(null);
+  const [currentLevel, setCurrentLevel] = useState(null);
+  const [certificateData, setCertificateData] = useState(null);
+
+  useEffect(() => {
+    try {
+      const savedStudent = localStorage.getItem('ideolix-student');
+      if (savedStudent) {
+        setStudent(JSON.parse(savedStudent));
+        setView('dashboard');
+      }
+    } catch (error) {
+      console.error("Failed to parse student data from localStorage", error);
+      localStorage.removeItem('ideolix-student');
+    }
+  }, []);
+
+  const updateStudent = useCallback((newStudentData) => {
+    setStudent(prev => {
+      if (!prev) return null;
+      const updatedStudent = { ...prev, ...newStudentData };
+      localStorage.setItem('ideolix-student', JSON.stringify(updatedStudent));
+      return updatedStudent;
+    });
+  }, []);
+
+  const handleLogin = (name, grade) => {
+    const newStudent = {
+      name,
+      grade,
+      progress: {},
+      assessments: [],
+    };
+    localStorage.setItem('ideolix-student', JSON.stringify(newStudent));
+    setStudent(newStudent);
+    setView('dashboard');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('ideolix-student');
+    setStudent(null);
+    setCurrentGrade(null);
+    setCurrentSubject(null);
+    setCurrentTopic(null);
+    setCurrentLevel(null);
+    setView('login');
+  };
+  
+  const handleUpdateProgress = (grade, subject, topic, newLevel) => {
+    if (!student) return;
+
+    const newProgress = JSON.parse(JSON.stringify(student.progress));
+    if (!newProgress[grade]) newProgress[grade] = {};
+    if (!newProgress[grade][subject]) newProgress[grade][subject] = {};
     
-    <!-- The main application script -->
-    <script type="text/babel" data-type="module" src="./index.tsx"></script>
+    const currentCompletedLevel = newProgress[grade][subject][topic] || 0;
+    if (newLevel > currentCompletedLevel) {
+      newProgress[grade][subject][topic] = newLevel;
+      updateStudent({ progress: newProgress });
+    }
+  };
+
+  const handleSaveAssessment = (score) => {
+    if (!student || !currentGrade || !currentSubject) return;
+    const newAssessment = {
+        grade: currentGrade,
+        subject: currentSubject,
+        score,
+        date: new Date().toISOString(),
+    };
+    const newAssessments = [...student.assessments, newAssessment];
+    updateStudent({ assessments: newAssessments });
+  };
+
+  const renderView = () => {
+    if (!student) return <LoginScreen onLogin={handleLogin} />;
+
+    switch (view) {
+      case 'dashboard':
+        return <DashboardScreen 
+          student={student}
+          onSelectGrade={(grade) => { setCurrentGrade(grade); setView('subject_selection'); }} 
+        />;
+      case 'subject_selection':
+        if (!currentGrade) return null;
+        return <SubjectSelectionScreen 
+          grade={currentGrade} 
+          onSelectSubject={(subject) => { setCurrentSubject(subject); setView('topic_selection'); }}
+          onBack={() => { setCurrentGrade(null); setView('dashboard'); }}
+        />;
+      case 'topic_selection':
+        if (!currentGrade || !currentSubject) return null;
+        const allTopics = CURRICULUM[currentGrade]?.[currentSubject] || [];
+        return <TopicSelectionScreen 
+          grade={currentGrade}
+          subject={currentSubject}
+          progress={student.progress?.[currentGrade]?.[currentSubject] || {}}
+          allTopics={allTopics}
+          onSelectTopic={(topic) => { setCurrentTopic(topic); setView('level_selection'); }}
+          onStartAssessment={() => setView('assessment')}
+          onBack={() => { setCurrentSubject(null); setView('subject_selection'); }}
+        />;
+      case 'level_selection':
+        if (!currentGrade || !currentSubject || !currentTopic) return null;
+        return <LevelSelectionScreen 
+          topic={currentTopic}
+          completedLevel={student.progress?.[currentGrade]?.[currentSubject]?.[currentTopic] || 0}
+          onSelectLevel={(level) => { setCurrentLevel(level); setView('practice'); }}
+          onBack={() => { setCurrentTopic(null); setView('topic_selection'); }}
+        />;
+      case 'practice':
+        if (!currentGrade || !currentSubject || !currentTopic || !currentLevel) return null;
+        return <PracticeScreen 
+          grade={currentGrade}
+          subject={currentSubject}
+          topic={currentTopic}
+          level={currentLevel}
+          onComplete={(newLevel) => {
+            handleUpdateProgress(currentGrade, currentSubject, currentTopic, newLevel);
+            setView('level_selection');
+          }}
+          onBack={() => { setCurrentLevel(null); setView('level_selection'); }}
+        />;
+      case 'assessment':
+        if (!currentGrade || !currentSubject) return null;
+        return <AssessmentScreen
+          grade={currentGrade}
+          subject={currentSubject}
+          onPass={(score) => {
+             handleSaveAssessment(score);
+             setCertificateData({ 
+                 name: student.name, 
+                 grade: currentGrade, 
+                 subject: currentSubject, 
+                 score 
+             });
+             setView('certificate');
+          }}
+          onBack={() => setView('topic_selection')}
+        />;
+      case 'certificate':
+        if (!certificateData) return null;
+        return <CertificateScreen 
+            data={certificateData}
+            onBack={() => {
+                setCertificateData(null);
+                setView('topic_selection');
+            }}
+        />;
+      default:
+        return <LoginScreen onLogin={handleLogin} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen font-sans p-4 sm:p-6 lg:p-8">
+       <header className="max-w-7xl mx-auto mb-8 flex justify-between items-center">
+        <Logo />
+        {student && (
+           <div className="flex items-center gap-4">
+             <span className="font-semibold hidden sm:inline">Welcome, {student.name}!</span>
+            <button
+              onClick={handleLogout}
+              className="bg-brand-orange text-white font-bold py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        )}
+      </header>
+      <main className="max-w-7xl mx-auto">
+        {renderView()}
+      </main>
+    </div>
+  );
+};
+
+// --- Inlined from: index.tsx ---
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error("Could not find root element to mount to");
+}
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// --- End of combined script ---
+    </script>
   </body>
 </html>
