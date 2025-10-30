@@ -210,13 +210,37 @@ Create a diverse set of questions covering the specified topics. Each question s
 
         } catch (error) {
             console.error("AI question batch generation failed:", error);
+            console.log("Using fallback questions...");
+            
+            // Enhanced fallback questions
             const fallbackQuestions = [];
             for (let i = 0; i < count; i++) {
                 const topic = topics[i % topics.length] || 'the subject';
+                const baseQuestions = {
+                    'Math': [
+                        {q: `What is 2 + 2?`, a: '4', opts: ['3', '4', '5', '6']},
+                        {q: `What shape has 3 sides?`, a: 'Triangle', opts: ['Square', 'Circle', 'Triangle', 'Rectangle']},
+                        {q: `How many sides does a square have?`, a: '4', opts: ['3', '4', '5', '6']}
+                    ],
+                    'Science': [
+                        {q: `What planet do we live on?`, a: 'Earth', opts: ['Mars', 'Earth', 'Jupiter', 'Venus']},
+                        {q: `What do plants need to grow?`, a: 'Sunlight', opts: ['Sunlight', 'Darkness', 'Cold', 'No water']},
+                        {q: `What is H2O?`, a: 'Water', opts: ['Water', 'Fire', 'Earth', 'Air']}
+                    ],
+                    'Literature Arts': [
+                        {q: `What is a person in a story called?`, a: 'Character', opts: ['Character', 'Setting', 'Plot', 'Theme']},
+                        {q: `What punctuation ends a question?`, a: 'Question mark', opts: ['Period', 'Question mark', 'Comma', 'Exclamation mark']},
+                        {q: `What is the main idea of a story called?`, a: 'Theme', opts: ['Character', 'Setting', 'Theme', 'Plot']}
+                    ]
+                };
+                
+                const subjectQuestions = baseQuestions[subject] || baseQuestions['Math'];
+                const selected = subjectQuestions[i % subjectQuestions.length];
+                
                 fallbackQuestions.push({
-                    questionText: `This is a fallback question for "${topic}". Which of these is a number?`,
-                    correctAnswer: '3',
-                    options: shuffle(['A', 'B', 'C', '3']),
+                    questionText: selected.q,
+                    correctAnswer: selected.a,
+                    options: shuffle(selected.opts),
                     questionType: 'multiple-choice'
                 });
             }
@@ -572,7 +596,12 @@ const PracticeScreen = ({ grade, subject, topic, level, onComplete, onBack }) =>
   };
 
   if (isLoading) {
-      return <div className="text-center p-10">Crafting your questions...</div>;
+      return (
+        <div className="text-center p-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-green mx-auto mb-4"></div>
+          <p>Crafting your questions...</p>
+        </div>
+      );
   }
   if (!questions || questions.length === 0) return <div className="text-center p-10">Could not load questions. Please try again.</div>;
 
@@ -750,7 +779,12 @@ const AssessmentScreen = ({ grade, subject, onPass, onBack }) => {
   }, [score, isLoading, handleSubmit]);
 
   if (isLoading) {
-      return <div className="text-center p-10"><h3>Building your assessment...</h3></div>;
+      return (
+        <div className="text-center p-10">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-green mx-auto mb-4"></div>
+          <h3>Building your assessment...</h3>
+        </div>
+      );
   }
   if (!questions || questions.length === 0) return <div className="text-center p-10">Could not load assessment. Please try again.</div>;
 
@@ -883,7 +917,11 @@ const CertificateScreen = ({ data, onBack }) => {
             <div id="certificate-wrapper">
                 <div className="bg-white dark:bg-brand-dark-secondary p-8 rounded-lg shadow-2xl border-4 border-brand-orange max-w-4xl mx-auto">
                     <div className="text-center border-b-2 border-gray-300 pb-4">
-                        <img src="https://raw.githubusercontent.com/ideolixlearninghub/ideolix-web/main/ideolix%20LOGO.jpg" alt="Ideolix Logo" className="w-20 h-20 mx-auto rounded-full mb-4" />
+                        <img 
+                            src="https://raw.githubusercontent.com/ideolixlearninghub/ideolix-web/main/ideolix%20LOGO.jpg" 
+                            alt="Ideolix Logo" 
+                            className="w-20 h-20 mx-auto rounded-full mb-4"
+                        />
                         <h1 className="text-4xl font-extrabold text-brand-dark dark:text-brand-light">Certificate of Achievement</h1>
                         <p className="text-lg text-gray-500 dark:text-gray-400 mt-2">Proudly Presented To</p>
                     </div>
